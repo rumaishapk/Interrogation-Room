@@ -29,7 +29,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const caseDef = getCase(caseId);
+  let caseDef;
+  try {
+    caseDef = await getCase(caseId);
+  } catch (err) {
+    console.error("Failed to load case:", err);
+    return Response.json({ error: "The case file is unavailable right now." }, { status: 503 });
+  }
   if (!caseDef) {
     return Response.json({ error: "Case not found." }, { status: 404 });
   }

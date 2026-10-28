@@ -50,8 +50,8 @@ export default function GameBoard({ gameCase }: Props) {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <header className="border-b border-slate-800 px-6 py-5">
-        <Link href="/" className="text-sm text-red-400">
-          ← Interrogation Room
+        <Link href="/cases" className="text-sm text-red-400">
+          ← All cases
         </Link>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">

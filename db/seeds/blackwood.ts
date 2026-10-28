@@ -1,5 +1,6 @@
-import "server-only";
-import type { CaseDefinition } from "../types";
+// Seed data: read only by scripts/seed.ts, never imported by the app.
+// The app loads cases from PostgreSQL. Run `npm run db:seed` after editing this file.
+import type { CaseDefinition } from "../../lib/game/types.ts";
 
 export const blackwoodCase: CaseDefinition = {
   id: "blackwood-001",

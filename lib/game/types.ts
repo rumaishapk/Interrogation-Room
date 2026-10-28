@@ -3,6 +3,9 @@
 
 export type Difficulty = "easy" | "medium" | "hard";
 
+// draft: generated, waiting for review. published: playable. rejected: kept but hidden.
+export type CaseStatus = "draft" | "published" | "rejected";
+
 export type Suspect = {
   id: string;
   name: string;
@@ -68,6 +71,15 @@ export type PublicCase = {
   clues: Clue[];
   motives: Choice[];
   weapons: Choice[];
+};
+
+// The short version shown on the case list.
+export type CaseSummary = {
+  id: string;
+  title: string;
+  difficulty: Difficulty;
+  briefing: string;
+  suspectCount: number;
 };
 
 // The full case, including answers. Server-only.

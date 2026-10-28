@@ -17,7 +17,7 @@ export default function HomePage() {
       </p>
 
       <Link
-        href="/game"
+        href="/cases"
         className="mt-10 rounded-lg bg-red-600 px-8 py-4 font-semibold transition hover:bg-red-500"
       >
         Start Investigation
