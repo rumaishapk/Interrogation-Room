@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -15,12 +16,12 @@ export default function HomePage() {
         Can you discover the truth?
       </p>
 
-      <a
+      <Link
         href="/game"
         className="mt-10 rounded-lg bg-red-600 px-8 py-4 font-semibold transition hover:bg-red-500"
       >
         Start Investigation
-      </a>
+      </Link>
     </main>
   );
 }
