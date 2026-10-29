@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { createCase, type CreateCaseState } from "@/app/create/actions";
+import { brassButton } from "@/components/ui/buttons";
 
 export default function CreateCaseForm({ remaining }: { remaining: number }) {
   const [state, formAction, isPending] = useActionState<CreateCaseState, FormData>(createCase, {});
@@ -19,39 +20,41 @@ export default function CreateCaseForm({ remaining }: { remaining: number }) {
   }, [isPending]);
 
   return (
-    <form action={formAction} onSubmit={() => setStartedAt(Date.now())} className="mt-8 space-y-4">
+    <form action={formAction} onSubmit={() => setStartedAt(Date.now())} className="mt-6 space-y-4">
       <label className="block">
-        <span className="text-sm text-slate-400">Your story idea</span>
+        <span className="font-type text-xs uppercase tracking-widest text-ink-500">Your story idea</span>
+        {/* A ruled notepad page: blue lines and a red margin, all CSS */}
         <textarea
           name="idea"
           required
           minLength={10}
           maxLength={500}
-          rows={5}
+          rows={6}
           defaultValue={state.idea}
           disabled={isPending}
           onChange={(event) => setLength(event.target.value.length)}
           placeholder="e.g. A famous magician vanishes during his final show on a cruise ship, and is found dead in the props room."
-          className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 leading-7 outline-none focus:border-red-500"
+          className="mt-2 w-full resize-y rounded-sm border border-ink-500/40 bg-paper-50 py-[6px] pl-14 pr-4 font-type text-[15px] leading-8 text-ink-900 shadow-inner outline-none placeholder:text-ink-500/60 focus:border-evidence-600 disabled:opacity-60 bg-[linear-gradient(90deg,transparent_42px,rgb(184_56_58/0.45)_42px,rgb(184_56_58/0.45)_44px,transparent_44px),repeating-linear-gradient(transparent_0,transparent_31px,rgb(70_110_160/0.25)_31px,rgb(70_110_160/0.25)_32px)] bg-[length:100%_100%,100%_32px] [background-attachment:local]"
         />
-        <span className="text-xs text-slate-500">{length}/500</span>
+        <span className="font-type text-xs text-ink-500">{length}/500</span>
       </label>
 
       {state.error && (
-        <p className="rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-300">{state.error}</p>
+        <p role="alert" className="border-l-4 border-evidence-600 bg-evidence-600/10 px-3 py-2 font-type text-sm text-evidence-800">
+          {state.error}
+        </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending || remaining === 0}
-        className="rounded-lg bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 disabled:opacity-40"
-      >
-        {isPending ? `Writing your mystery… ${seconds}s` : "Create Case"}
+      <button type="submit" disabled={isPending || remaining === 0} className={brassButton}>
+        {isPending ? `Typing up your case… ${seconds}s` : "Create Case"}
       </button>
       {isPending && (
-        <p className="text-sm text-slate-500">
+        <p className="font-type text-sm text-ink-500">
           This usually takes about a minute. Please keep this page open.
         </p>
+      )}
+      {remaining === 0 && !isPending && (
+        <p className="font-type text-sm text-evidence-600">You&apos;ve used today&apos;s case files. Come back tomorrow.</p>
       )}
     </form>
   );

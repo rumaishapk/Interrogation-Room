@@ -98,7 +98,8 @@ async function loadCase(
   // These queries don't depend on each other, so run them at the same time.
   const [suspects, clues, motives, weapons, truth, knowledge] = await Promise.all([
     pool.query<Suspect>(
-      "SELECT id, name, occupation, description FROM suspects WHERE case_id = $1 ORDER BY position",
+      `SELECT id, name, occupation, description, appearance, look
+       FROM suspects WHERE case_id = $1 ORDER BY position`,
       [caseId]
     ),
     pool.query<Clue>(
@@ -137,7 +138,13 @@ async function loadCase(
 
   return {
     ...caseRow,
-    suspects: suspects.rows,
+    // Older cases have NULL appearance/look. Leave those fields out rather than
+    // passing null, which the type and the validator treat as "missing".
+    suspects: suspects.rows.map(({ appearance, look, ...s }) => ({
+      ...s,
+      ...(appearance ? { appearance } : {}),
+      ...(look ? { look } : {}),
+    })),
     clues: clues.rows,
     motives: motives.rows,
     weapons: weapons.rows,

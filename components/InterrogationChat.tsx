@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage, Suspect } from "@/lib/game/types";
+import SuspectPortrait from "@/components/ui/SuspectPortrait";
+import { brassButton, ghostButton, paperInput } from "@/components/ui/buttons";
 
 export type { ChatMessage };
 
@@ -59,72 +61,65 @@ export default function InterrogationChat({
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-red-900/60 bg-slate-900">
-      <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-red-400">Interrogation</p>
-          <h3 className="font-semibold">{suspect.name}</h3>
+    <div className="overflow-hidden rounded-sm border border-ink-700/40 bg-walnut-900 shadow-inner">
+      {/* The interrogation room: the suspect under a hanging lamp */}
+      <div className="relative flex items-center gap-4 bg-[radial-gradient(ellipse_at_30%_0%,rgb(242_196_109/0.35),transparent_70%)] px-5 py-4">
+        <div className="w-16 shrink-0 border-4 border-paper-50 shadow-md sm:w-20">
+          <SuspectPortrait suspect={suspect} className="aspect-square w-full" />
         </div>
-        <button
-          onClick={onEnd}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm hover:bg-slate-700"
-        >
-          End Interrogation
+        <div className="min-w-0 flex-1">
+          <p className="font-type text-xs uppercase tracking-[0.3em] text-brass-300">Interrogation in progress</p>
+          <h3 className="truncate font-display text-xl font-bold text-paper-100">{suspect.name}</h3>
+        </div>
+        <button onClick={onEnd} className={ghostButton}>
+          End
         </button>
       </div>
 
-      <div className="h-80 space-y-3 overflow-y-auto px-5 py-4">
+      {/* The typed transcript */}
+      <div className="paper mx-3 mb-3 h-96 space-y-4 overflow-y-auto rounded-sm px-5 py-5" aria-live="polite">
+        <p className="font-type text-xs uppercase tracking-widest text-ink-500">
+          Transcript · {suspect.name} · {suspect.occupation}
+        </p>
         {messages.length === 0 && (
-          <p className="text-sm text-slate-500">
-            {suspect.name} is seated across the table. Ask your first question —
-            for example, &quot;Where were you tonight?&quot;
+          <p className="font-type text-sm text-ink-700">
+            {suspect.name} is seated across the table. Ask your first question, for example
+            &quot;Where were you tonight?&quot;
           </p>
         )}
 
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex ${msg.role === "detective" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[80%] rounded-xl px-4 py-2 text-sm leading-6 ${
-                msg.role === "detective" ? "bg-red-700" : "bg-slate-800 text-slate-200"
-              }`}
-            >
-              <p className="mb-1 text-xs opacity-60">
-                {msg.role === "detective" ? "You" : suspect.name}
-              </p>
+          <div key={index} className={msg.role === "detective" ? "pl-8 sm:pl-16" : "pr-8 sm:pr-16"}>
+            <p className={`font-type text-xs uppercase tracking-widest ${msg.role === "detective" ? "text-evidence-600" : "text-ink-500"}`}>
+              {msg.role === "detective" ? "Detective" : suspect.name}:
+            </p>
+            <p className={`mt-0.5 leading-7 text-ink-900 ${msg.role === "detective" ? "font-type text-sm" : "font-body"}`}>
               {msg.content}
-              {msg.source === "fallback" && (
-                <p className="mt-2 border-t border-slate-700 pt-2 text-xs italic text-amber-300/80">
-                  AI unavailable: basic answer. Try again in a little while.
-                </p>
-              )}
-            </div>
+            </p>
+            {msg.source === "fallback" && (
+              <p className="mt-1 inline-block -rotate-1 border border-dashed border-ink-500/60 px-2 py-0.5 font-type text-[11px] text-ink-500">
+                AI unavailable: basic answer. Try again in a little while.
+              </p>
+            )}
           </div>
         ))}
 
-        {isSending && (
-          <p className="text-sm italic text-slate-500">{suspect.name} is thinking…</p>
-        )}
+        {isSending && <p className="font-type text-sm italic text-ink-500">{suspect.name} is thinking…</p>}
         <div ref={bottomRef} />
       </div>
 
-      {error && <p className="px-5 pb-2 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className="px-5 pb-2 font-type text-sm text-tape-400">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-slate-800 p-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 px-3 pb-3 sm:flex-row">
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}
           maxLength={500}
+          aria-label={`Your question for ${suspect.name}`}
           placeholder={`Ask ${suspect.name} a question…`}
-          className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-sm outline-none focus:border-red-500"
+          className={`flex-1 ${paperInput} !bg-paper-50`}
         />
-        <button
-          type="submit"
-          disabled={isSending || input.trim() === ""}
-          className="rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-500 disabled:opacity-40"
-        >
+        <button type="submit" disabled={isSending || input.trim() === ""} className={brassButton}>
           Ask
         </button>
       </form>

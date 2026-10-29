@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CaseDefinition } from "./types";
+import { LOOK_OPTIONS } from "./suspect-look.ts"; // .ts so Node can run the unit tests directly
 
 // Checks whether a case is safe to publish. Used by the seed script now,
 // and by the AI case generator later. Not secret, so no "server-only".
@@ -18,6 +19,20 @@ const time = z
   .regex(/^(1[0-2]|[1-9]):[0-5]\d (AM|PM)$/, 'must look like "10:42 PM"');
 const choice = z.object({ id, label: text });
 
+// Each look field must be one of the fixed options the portrait drawer knows.
+const lookSchema = z.object({
+  presentation: z.enum(LOOK_OPTIONS.presentation),
+  age: z.enum(LOOK_OPTIONS.age),
+  skin: z.enum(LOOK_OPTIONS.skin),
+  hairColor: z.enum(LOOK_OPTIONS.hairColor),
+  hairStyle: z.enum(LOOK_OPTIONS.hairStyle),
+  facialHair: z.enum(LOOK_OPTIONS.facialHair),
+  glasses: z.enum(LOOK_OPTIONS.glasses),
+  headwear: z.enum(LOOK_OPTIONS.headwear),
+  outfit: z.enum(LOOK_OPTIONS.outfit),
+  outfitColor: z.enum(LOOK_OPTIONS.outfitColor),
+});
+
 // The type annotation makes TypeScript fail if this schema and CaseDefinition drift apart.
 // Exported so the AI generator can tell Gemini what shape to produce.
 export const caseSchema: z.ZodType<CaseDefinition> = z.object({
@@ -29,7 +44,17 @@ export const caseSchema: z.ZodType<CaseDefinition> = z.object({
   location: text,
   timeOfDeath: text,
   suspects: z
-    .array(z.object({ id, name: text, occupation: text, description: text }))
+    .array(
+      z.object({
+        id,
+        name: text,
+        occupation: text,
+        description: text,
+        // Optional: cases made before portraits existed don't have them.
+        appearance: text.max(300).optional(),
+        look: lookSchema.optional(),
+      })
+    )
     .min(3, "a mystery needs at least 3 suspects"),
   clues: z.array(z.object({ id, title: text, description: text })).min(2),
   motives: z.array(choice).min(2, "need at least one wrong motive to choose from"),

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { AccusationResult, Choice, PublicCase, Suspect } from "@/lib/game/types";
+import Stamp from "@/components/ui/Stamp";
+import { brassButton, inkButton } from "@/components/ui/buttons";
 
 type Props = {
   gameCase: PublicCase;
@@ -54,19 +56,28 @@ export default function AccusationForm({ gameCase, suspect, onResult, onCancel }
     }
   }
 
+  // One numbered section of the report: a typed heading, then its choices.
+  const section = (n: number, title: string) => (
+    <legend className="flex items-baseline gap-2 font-type text-sm uppercase tracking-widest text-ink-900">
+      <span className="text-evidence-600">{n}.</span> {title}
+    </legend>
+  );
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-6 rounded-xl border border-red-900/60 bg-slate-900 p-5"
-    >
-      <p className="text-xs uppercase tracking-widest text-red-400">Final accusation</p>
-      <h3 className="mt-1 font-semibold">You are accusing {suspect.name}</h3>
-      <p className="mt-1 text-sm text-slate-400">
-        This closes the case. You cannot question anyone afterward.
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b-2 border-ink-900/70 pb-3">
+        <div>
+          <p className="font-type text-xs uppercase tracking-[0.3em] text-evidence-600">Final accusation</p>
+          <h3 className="mt-1 font-display text-2xl font-bold text-ink-900">Case Report: {suspect.name}</h3>
+        </div>
+        <Stamp tone="red" rotate={4}>Charge</Stamp>
+      </div>
+      <p className="font-type text-sm text-ink-700">
+        Filing this report closes the case. You cannot question anyone afterwards.
       </p>
 
       <ChoiceGroup
-        legend="Motive"
+        legend={section(1, "Motive")}
         name="motive"
         options={gameCase.motives}
         selectedId={motiveId}
@@ -74,53 +85,51 @@ export default function AccusationForm({ gameCase, suspect, onResult, onCancel }
       />
 
       <ChoiceGroup
-        legend="Weapon"
+        legend={section(2, "Weapon")}
         name="weapon"
         options={gameCase.weapons}
         selectedId={weaponId}
         onSelect={setWeaponId}
       />
 
-      <fieldset className="mt-5">
-        <legend className="text-sm font-semibold">Proof — select the evidence that supports your case</legend>
-        <div className="mt-2 space-y-2">
-          {gameCase.clues.map((clue) => (
+      <fieldset>
+        {section(3, "Evidence: tick everything that proves your case")}
+        <div className="mt-2 divide-y divide-dashed divide-ink-500/40 border-y border-dashed border-ink-500/40">
+          {gameCase.clues.map((clue, i) => (
             <label
               key={clue.id}
-              className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm ${
-                evidenceIds.includes(clue.id) ? "border-red-500 bg-red-950/30" : "border-slate-800"
+              className={`flex cursor-pointer gap-3 px-2 py-3 transition ${
+                evidenceIds.includes(clue.id) ? "bg-evidence-600/10" : "hover:bg-ink-900/5"
               }`}
             >
               <input
                 type="checkbox"
                 checked={evidenceIds.includes(clue.id)}
                 onChange={() => toggleEvidence(clue.id)}
-                className="accent-red-600"
+                className="mt-1 h-4 w-4 shrink-0 accent-evidence-600"
               />
               <span>
-                <span className="font-semibold">{clue.title}</span>
-                <span className="mt-1 block text-slate-400">{clue.description}</span>
+                <span className="font-display font-bold text-ink-900">
+                  Exhibit {String.fromCharCode(65 + i)}: {clue.title}
+                </span>
+                <span className="mt-1 block font-type text-xs leading-5 text-ink-700">{clue.description}</span>
               </span>
             </label>
           ))}
         </div>
       </fieldset>
 
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="border-l-4 border-evidence-600 bg-evidence-600/10 px-3 py-2 font-type text-sm text-evidence-800">
+          {error}
+        </p>
+      )}
 
-      <div className="mt-5 flex flex-wrap gap-3">
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="rounded-lg bg-red-600 px-5 py-3 font-semibold hover:bg-red-500 disabled:opacity-40"
-        >
-          {isSubmitting ? "Submitting…" : "Submit Accusation"}
+      <div className="flex flex-wrap gap-3">
+        <button type="submit" disabled={!canSubmit} className={brassButton}>
+          {isSubmitting ? "Filing…" : "Submit Accusation"}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg bg-slate-800 px-5 py-3 hover:bg-slate-700"
-        >
+        <button type="button" onClick={onCancel} className={inkButton}>
           Cancel
         </button>
       </div>
@@ -129,7 +138,7 @@ export default function AccusationForm({ gameCase, suspect, onResult, onCancel }
 }
 
 type ChoiceGroupProps = {
-  legend: string;
+  legend: React.ReactNode;
   name: string;
   options: Choice[];
   selectedId: string | null;
@@ -139,14 +148,14 @@ type ChoiceGroupProps = {
 // A list of radio buttons. Used for both motive and weapon, which work the same way.
 function ChoiceGroup({ legend, name, options, selectedId, onSelect }: ChoiceGroupProps) {
   return (
-    <fieldset className="mt-5">
-      <legend className="text-sm font-semibold">{legend}</legend>
-      <div className="mt-2 space-y-2">
+    <fieldset>
+      {legend}
+      <div className="mt-2 divide-y divide-dashed divide-ink-500/40 border-y border-dashed border-ink-500/40">
         {options.map((option) => (
           <label
             key={option.id}
-            className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm ${
-              selectedId === option.id ? "border-red-500 bg-red-950/30" : "border-slate-800"
+            className={`flex cursor-pointer items-center gap-3 px-2 py-2.5 font-body text-ink-900 transition ${
+              selectedId === option.id ? "bg-evidence-600/10 font-semibold" : "hover:bg-ink-900/5"
             }`}
           >
             <input
@@ -154,7 +163,7 @@ function ChoiceGroup({ legend, name, options, selectedId, onSelect }: ChoiceGrou
               name={name}
               checked={selectedId === option.id}
               onChange={() => onSelect(option.id)}
-              className="accent-red-600"
+              className="h-4 w-4 shrink-0 accent-evidence-600"
             />
             {option.label}
           </label>

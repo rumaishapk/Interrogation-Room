@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CaseStatus } from "@/lib/game/types";
+import { brassButton, inkButton } from "@/components/ui/buttons";
 
 const actions: { status: CaseStatus; label: string; className: string }[] = [
-  { status: "published", label: "Publish", className: "bg-emerald-700 hover:bg-emerald-600" },
-  { status: "rejected", label: "Reject", className: "bg-red-800 hover:bg-red-700" },
-  { status: "draft", label: "Move back to draft", className: "bg-slate-700 hover:bg-slate-600" },
+  { status: "published", label: "Publish", className: brassButton },
+  { status: "rejected", label: "Reject", className: `${inkButton} border-evidence-600 text-evidence-600` },
+  { status: "draft", label: "Move back to draft", className: inkButton },
 ];
 
 type Props = {
@@ -56,17 +57,17 @@ export default function CaseStatusButtons({ caseId, currentStatus }: Props) {
               key={action.status}
               onClick={() => changeStatus(action.status)}
               disabled={pending !== null}
-              className={`rounded-lg px-5 py-2 text-sm font-semibold disabled:opacity-40 ${action.className}`}
+              className={action.className}
             >
               {pending === action.status ? "Saving…" : action.label}
             </button>
           ))}
       </div>
       {error && (
-        <div className="mt-3 rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm">
-          <p className="text-red-300">{error}</p>
+        <div role="alert" className="mt-3 border-l-4 border-evidence-600 bg-evidence-600/10 px-4 py-3 font-type text-sm">
+          <p className="text-evidence-800">{error}</p>
           {details.length > 0 && (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-700">
               {details.map((d) => (
                 <li key={d}>{d}</li>
               ))}

@@ -33,6 +33,10 @@ const SYSTEM_INSTRUCTION = `You write original murder mysteries for a detective 
 
 Story rules:
 - One victim, one murderer. The murderer is one of the suspects.
+- Every suspect has an "appearance" (1–2 sentences a detective would notice: age, build, clothes, a detail)
+  and a "look" that matches it, chosen from the allowed options. The look is used to draw their portrait,
+  so it must agree with the appearance, the description's pronouns and the occupation
+  (a chef wears "chef", a scientist may wear "lab-coat", etc.).
 - Every suspect has a believable reason to be there and something they hide, so the answer isn't obvious.
 - truth.explanation tells the whole story of what happened and why.
 

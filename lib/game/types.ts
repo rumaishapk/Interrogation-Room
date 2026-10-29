@@ -1,6 +1,8 @@
 // The shape every case must follow. The database tables and the AI case
 // generator will both be built around these types.
 
+import type { SuspectLook } from "./suspect-look";
+
 export type Difficulty = "easy" | "medium" | "hard";
 
 // draft: generated, waiting for review. published: playable. rejected: kept but hidden.
@@ -11,6 +13,9 @@ export type Suspect = {
   name: string;
   occupation: string;
   description: string;
+  // Public. Missing on cases created before portraits existed.
+  appearance?: string; // 1–2 sentences, shown on the profile
+  look?: SuspectLook; // used to draw the portrait
 };
 
 export type Clue = {

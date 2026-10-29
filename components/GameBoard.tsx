@@ -7,6 +7,12 @@ import InterrogationChat, { type ChatMessage } from "@/components/InterrogationC
 import AccusationForm from "@/components/AccusationForm";
 import VerdictPanel from "@/components/VerdictPanel";
 import DifficultyBadge from "@/components/DifficultyBadge";
+import SuspectDossier from "@/components/game/SuspectDossier";
+import PaperCard from "@/components/ui/PaperCard";
+import PushPin from "@/components/ui/PushPin";
+import Stamp from "@/components/ui/Stamp";
+import SuspectPortrait from "@/components/ui/SuspectPortrait";
+import { brassButton, inkButton } from "@/components/ui/buttons";
 
 type Tab = "suspects" | "evidence" | "timeline";
 type Panel = "none" | "interrogate" | "accuse";
@@ -18,20 +24,27 @@ type Props = {
   initialConversations: Record<string, ChatMessage[]>;
 };
 
+const TABS: [Tab, string][] = [
+  ["suspects", "Suspects"],
+  ["evidence", "Evidence"],
+  ["timeline", "Timeline"],
+];
+
+// Small repeating tilts so pinned items look placed by hand.
+const TILTS = [-2, 1.5, -1, 2, -1.5, 1];
+const tiltOf = (i: number) => TILTS[i % TILTS.length];
+
 export default function GameBoard({ gameCase, initialConversations }: Props) {
   const { suspects, clues } = gameCase;
   const [activeTab, setActiveTab] = useState<Tab>("suspects");
-  const [selectedSuspectId, setSelectedSuspectId] = useState(
-    suspects[0].id
-  );
+  const [selectedSuspectId, setSelectedSuspectId] = useState(suspects[0].id);
   const [panel, setPanel] = useState<Panel>("none");
   // One conversation per suspect, keyed by suspect id: { david: [...], alice: [...] }
   const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>(initialConversations);
   const [result, setResult] = useState<AccusationResult | null>(null);
 
-  const selectedSuspect = suspects.find(
-    (suspect) => suspect.id === selectedSuspectId
-  );
+  const selectedSuspect = suspects.find((suspect) => suspect.id === selectedSuspectId);
+  const questioned = (id: string) => (chatHistories[id]?.length ?? 0) > 0;
 
   function addMessage(suspectId: string, message: ChatMessage) {
     // Use the functional form: a reply can arrive after other messages were added.
@@ -56,200 +69,176 @@ export default function GameBoard({ gameCase, initialConversations }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 px-6 py-5">
-        <Link href="/cases" className="text-sm text-red-400">
-          ← All cases
+    <main className="desk min-h-screen px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-6xl">
+        <Link href="/cases" className="font-type text-sm uppercase tracking-wider text-brass-300 hover:text-lamp-300">
+          ← All case files
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold">
-            {gameCase.title}
-          </h1>
-          <DifficultyBadge difficulty={gameCase.difficulty} />
-        </div>
-
-        <p className="mt-2 text-sm text-slate-400">
-          Victim: {gameCase.victim} · Location: {gameCase.location}
-        </p>
-      </header>
-
-      <section className="mx-auto grid max-w-7xl gap-6 p-6 md:grid-cols-[240px_1fr]">
-        <aside className="rounded-xl border border-slate-800 p-4">
-          <h2 className="mb-4 font-semibold">Investigation</h2>
-
-          {result ? (
-            <p className="rounded-lg bg-slate-900 px-4 py-3 text-sm text-slate-400">
-              The case is closed.
-            </p>
-          ) : (
-            (
-              [
-                ["suspects", "Suspects"],
-                ["evidence", "Evidence"],
-                ["timeline", "Timeline"],
-              ] as [Tab, string][]
-            ).map(([tab, label]) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`mb-2 w-full rounded-lg px-4 py-3 text-left ${
-                  activeTab === tab
-                    ? "bg-red-600"
-                    : "bg-slate-900 hover:bg-slate-800"
-                }`}
-              >
-                {label}
-              </button>
-            ))
-          )}
-
-          <div className="mt-6 border-t border-slate-800 pt-4">
-            <p className="text-sm text-slate-400">
-              Estimated time of death
-            </p>
-            <p className="mt-1 text-sm">
-              {gameCase.timeOfDeath}
-            </p>
+        {/* The case-file cover */}
+        <PaperCard className="mt-5 p-5 sm:p-7" tilt={-0.4}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="font-type text-xs uppercase tracking-[0.35em] text-ink-500">Homicide · Case file</p>
+              <h1 className="mt-2 font-display text-3xl font-black leading-tight text-ink-900 sm:text-4xl">{gameCase.title}</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <DifficultyBadge difficulty={gameCase.difficulty} onPaper />
+              <Stamp tone={result ? "green" : "red"} rotate={6} size="sm">
+                {result ? "Closed" : "Open"}
+              </Stamp>
+            </div>
           </div>
-        </aside>
-
-        <section className="rounded-xl border border-slate-800 p-5 md:p-8">
-          {result && <VerdictPanel result={result} onRestart={restart} />}
-
-          {!result && activeTab === "suspects" && (
-            <>
-              <h2 className="text-xl font-bold">Suspects</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Examine each person&apos;s background and statements.
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {suspects.map((suspect) => (
-                  <button
-                    key={suspect.id}
-                    onClick={() => {
-                      setSelectedSuspectId(suspect.id);
-                      setPanel("none");
-                    }}
-                    className={`rounded-xl border p-4 text-left ${
-                      selectedSuspectId === suspect.id
-                        ? "border-red-500 bg-red-950/30"
-                        : "border-slate-800 bg-slate-900 hover:border-slate-600"
-                    }`}
-                  >
-                    <h3 className="font-semibold">
-                      {suspect.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {suspect.occupation}
-                    </p>
-                    {(chatHistories[suspect.id]?.length ?? 0) > 0 && (
-                      <p className="mt-2 text-xs text-red-400">Questioned</p>
-                    )}
-                  </button>
-                ))}
+          <dl className="mt-5 grid gap-3 border-t border-ink-500/30 pt-4 sm:grid-cols-3">
+            {[
+              ["Victim", gameCase.victim],
+              ["Location", gameCase.location],
+              ["Time of death", gameCase.timeOfDeath],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="font-type text-[11px] uppercase tracking-widest text-ink-500">{label}</dt>
+                <dd className="mt-0.5 font-body font-semibold text-ink-900">{value}</dd>
               </div>
+            ))}
+          </dl>
+          {!result && <p className="mt-4 font-body text-sm italic leading-6 text-ink-700">{gameCase.briefing}</p>}
+        </PaperCard>
 
-              {selectedSuspect && (
-                <div className="mt-6 rounded-xl bg-slate-900 p-5">
-                  <p className="text-sm text-red-400">
-                    SUSPECT PROFILE
+        {result ? (
+          <div className="mt-10">
+            <VerdictPanel result={result} onRestart={restart} />
+          </div>
+        ) : (
+          <>
+            {/* Folder tabs */}
+            <div role="tablist" aria-label="Case sections" className="mt-10 flex gap-1 overflow-x-auto pl-2">
+              {TABS.map(([tab, label]) => (
+                <button
+                  key={tab}
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`shrink-0 rounded-t-md px-5 pb-2 pt-2.5 font-type text-sm uppercase tracking-widest transition ${
+                    activeTab === tab
+                      ? "bg-paper-300 text-ink-900 shadow-[0_-3px_8px_rgb(0_0_0/0.35)]"
+                      : "bg-walnut-800 text-paper-300 hover:bg-walnut-700"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div role="tabpanel" className="rounded-sm rounded-tl-none bg-paper-300 p-3 sm:p-5">
+              {activeTab === "suspects" && (
+                <div className="cork rounded-sm px-4 pb-10 pt-8 sm:px-8">
+                  <p className="mb-6 font-type text-sm text-paper-50 [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]">
+                    Click a suspect to open their dossier.
                   </p>
-                  <h3 className="mt-2 text-xl font-bold">
-                    {selectedSuspect.name}
-                  </h3>
-                  <p className="mt-2 text-slate-300">
-                    {selectedSuspect.description}
-                  </p>
-
-                  {panel === "interrogate" && (
-                    <InterrogationChat
-                      key={selectedSuspect.id}
-                      caseId={gameCase.id}
-                      suspect={selectedSuspect}
-                      messages={chatHistories[selectedSuspect.id] ?? []}
-                      onNewMessage={(message) => addMessage(selectedSuspect.id, message)}
-                      onEnd={() => setPanel("none")}
-                    />
-                  )}
-
-                  {panel === "accuse" && (
-                    <AccusationForm
-                      key={selectedSuspect.id}
-                      gameCase={gameCase}
-                      suspect={selectedSuspect}
-                      onResult={setResult}
-                      onCancel={() => setPanel("none")}
-                    />
-                  )}
-
-                  {panel === "none" && (
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <button
-                        onClick={() => setPanel("interrogate")}
-                        className="rounded-lg bg-red-600 px-5 py-3 font-semibold hover:bg-red-500"
-                      >
-                        {(chatHistories[selectedSuspect.id]?.length ?? 0) > 0
-                          ? "Resume Interrogation"
-                          : "Interrogate Suspect"}
-                      </button>
-                      <button
-                        onClick={() => setPanel("accuse")}
-                        className="rounded-lg border border-red-600 px-5 py-3 font-semibold text-red-300 hover:bg-red-950/40"
-                      >
-                        Accuse {selectedSuspect.name.split(" ")[0]}
-                      </button>
-                    </div>
-                  )}
+                  <ul className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+                    {suspects.map((suspect, i) => {
+                      const selected = suspect.id === selectedSuspectId;
+                      return (
+                        <li key={suspect.id} style={{ transform: `rotate(${tiltOf(i)}deg)` }}>
+                          <button
+                            onClick={() => {
+                              setSelectedSuspectId(suspect.id);
+                              setPanel("none");
+                            }}
+                            aria-pressed={selected}
+                            className={`relative block w-full bg-paper-50 p-2 pb-3 text-left shadow-[0_8px_16px_rgb(0_0_0/0.45)] transition hover:-translate-y-1 ${
+                              selected ? "ring-4 ring-lamp-300" : ""
+                            }`}
+                          >
+                            <PushPin className="absolute -top-3 left-1/2 -translate-x-1/2" />
+                            <SuspectPortrait suspect={suspect} className="aspect-square w-full" />
+                            <span className="mt-2 block truncate text-center font-type text-sm text-ink-900">{suspect.name}</span>
+                            <span className="block truncate text-center font-body text-xs italic text-ink-500">{suspect.occupation}</span>
+                            {questioned(suspect.id) && (
+                              <Stamp tone="red" rotate={-14} className="absolute right-1 top-[45%] bg-paper-50/70">
+                                Questioned
+                              </Stamp>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               )}
-            </>
-          )}
 
-          {!result && activeTab === "evidence" && (
-            <>
-              <h2 className="text-xl font-bold">Evidence Board</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Review the evidence available in this case.
-              </p>
+              {activeTab === "evidence" && (
+                <div className="cork rounded-sm px-4 pb-10 pt-8 sm:px-8">
+                  <ul className="grid gap-x-6 gap-y-10 sm:grid-cols-2">
+                    {clues.map((clue, i) => (
+                      <PaperCard as="li" key={clue.id} fastener="pin" tilt={tiltOf(i) / 2} className="p-5 pt-6">
+                        <p className="font-type text-xs uppercase tracking-[0.3em] text-evidence-600">
+                          Exhibit {String.fromCharCode(65 + i)}
+                        </p>
+                        <h3 className="mt-1 font-display text-lg font-bold text-ink-900">{clue.title}</h3>
+                        <p className="mt-2 font-type text-sm leading-6 text-ink-900">{clue.description}</p>
+                      </PaperCard>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {clues.map((clue) => (
-                  <article
-                    key={clue.id}
-                    className="rounded-xl border border-slate-800 bg-slate-900 p-5"
-                  >
-                    <h3 className="font-semibold">{clue.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
-                      {clue.description}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </>
-          )}
+              {activeTab === "timeline" && (
+                <div className="px-2 py-6 sm:px-6">
+                  <ol className="relative ml-3 border-l-4 border-dotted border-ink-700/50 pl-8">
+                    <li className="relative">
+                      <span aria-hidden="true" className="absolute -left-[42px] top-4 h-5 w-5 rounded-full border-4 border-paper-300 bg-evidence-600" />
+                      <PaperCard className="max-w-md p-4" tilt={-0.6}>
+                        <p className="font-type text-sm uppercase tracking-widest text-evidence-600">{gameCase.timeOfDeath}</p>
+                        <p className="mt-1 font-body text-ink-900">Estimated time of death.</p>
+                        <p className="mt-2 font-type text-xs text-ink-500">
+                          The exact timeline remains under investigation. Question the suspects to piece it together.
+                        </p>
+                      </PaperCard>
+                    </li>
+                  </ol>
+                </div>
+              )}
+            </div>
 
-          {!result && activeTab === "timeline" && (
-            <>
-              <h2 className="text-xl font-bold">Case Timeline</h2>
-              <p className="mt-2 text-slate-400">
-                Events will appear here as you discover facts.
-              </p>
+            {activeTab === "suspects" && selectedSuspect && (
+              <SuspectDossier suspect={selectedSuspect} questioned={questioned(selectedSuspect.id)}>
+                {panel === "interrogate" && (
+                  <InterrogationChat
+                    key={selectedSuspect.id}
+                    caseId={gameCase.id}
+                    suspect={selectedSuspect}
+                    messages={chatHistories[selectedSuspect.id] ?? []}
+                    onNewMessage={(message) => addMessage(selectedSuspect.id, message)}
+                    onEnd={() => setPanel("none")}
+                  />
+                )}
 
-              <div className="mt-6 border-l-2 border-red-600 pl-5">
-                <p className="font-semibold">
-                  {gameCase.timeOfDeath}
-                </p>
-                <p className="mt-1 text-sm text-slate-400">
-                  Estimated time of death. The exact timeline
-                  remains under investigation.
-                </p>
-              </div>
-            </>
-          )}
-        </section>
-      </section>
+                {panel === "accuse" && (
+                  <AccusationForm
+                    key={selectedSuspect.id}
+                    gameCase={gameCase}
+                    suspect={selectedSuspect}
+                    onResult={setResult}
+                    onCancel={() => setPanel("none")}
+                  />
+                )}
+
+                {panel === "none" && (
+                  <div className="flex flex-wrap gap-3">
+                    <button onClick={() => setPanel("interrogate")} className={brassButton}>
+                      {questioned(selectedSuspect.id) ? "Resume Interrogation" : "Interrogate Suspect"}
+                    </button>
+                    <button onClick={() => setPanel("accuse")} className={`${inkButton} border-evidence-600 text-evidence-600`}>
+                      Accuse {selectedSuspect.name.split(" ")[0]}
+                    </button>
+                  </div>
+                )}
+              </SuspectDossier>
+            )}
+          </>
+        )}
+      </div>
     </main>
   );
 }

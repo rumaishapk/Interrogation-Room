@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Difficulty } from "@/lib/game/types";
+import { brassButton, paperInput } from "@/components/ui/buttons";
 
 export default function GenerateCaseForm() {
   const router = useRouter();
@@ -49,55 +50,53 @@ export default function GenerateCaseForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-      <h2 className="font-semibold">Generate a new case</h2>
-      <p className="mt-1 text-sm text-slate-400">
+    <form onSubmit={handleSubmit} className="paper rounded-sm p-5 sm:p-6">
+      <h2 className="font-display text-xl font-bold text-ink-900">Generate a new case</h2>
+      <p className="mt-1 font-type text-sm text-ink-700">
         Gemini writes a draft. It stays hidden from players until you publish it.
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <select
-          value={difficulty}
-          onChange={(event) => setDifficulty(event.target.value as Difficulty)}
-          disabled={isGenerating}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-sm"
-        >
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-        <button
-          type="submit"
-          disabled={isGenerating}
-          className="rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-500 disabled:opacity-40"
-        >
-          {isGenerating ? `Generating… ${seconds}s` : "Generate Case"}
-        </button>
+      <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr]">
+        <label className="block">
+          <span className="font-type text-xs uppercase tracking-widest text-ink-500">Difficulty</span>
+          <select
+            value={difficulty}
+            onChange={(event) => setDifficulty(event.target.value as Difficulty)}
+            disabled={isGenerating}
+            className={`mt-1 ${paperInput}`}
+          >
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="font-type text-xs uppercase tracking-widest text-ink-500">Story idea (optional)</span>
+          <textarea
+            value={idea}
+            onChange={(event) => setIdea(event.target.value)}
+            disabled={isGenerating}
+            maxLength={500}
+            rows={3}
+            placeholder="e.g. A famous chef is poisoned during a wedding feast in Kerala"
+            className={`mt-1 ${paperInput}`}
+          />
+          <span className="font-type text-xs text-ink-500">{idea.length}/500</span>
+        </label>
       </div>
 
-      <label className="mt-4 block text-sm">
-        <span className="text-slate-400">Story idea (optional)</span>
-        <textarea
-          value={idea}
-          onChange={(event) => setIdea(event.target.value)}
-          disabled={isGenerating}
-          maxLength={500}
-          rows={3}
-          placeholder="e.g. A famous chef is poisoned during a wedding feast in Kerala"
-          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-sm outline-none focus:border-red-500"
-        />
-        <span className="text-xs text-slate-500">{idea.length}/500</span>
-      </label>
-
-      {isGenerating && (
-        <p className="mt-3 text-sm text-slate-500">This usually takes 30–90 seconds. Please wait.</p>
-      )}
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <button type="submit" disabled={isGenerating} className={brassButton}>
+          {isGenerating ? `Generating… ${seconds}s` : "Generate Case"}
+        </button>
+        {isGenerating && <p className="font-type text-sm text-ink-500">This usually takes 30–90 seconds. Please wait.</p>}
+      </div>
 
       {error && (
-        <div className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm">
-          <p className="text-red-300">{error}</p>
+        <div role="alert" className="mt-4 border-l-4 border-evidence-600 bg-evidence-600/10 px-4 py-3 font-type text-sm">
+          <p className="text-evidence-800">{error}</p>
           {details.length > 0 && (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-700">
               {details.map((d) => (
                 <li key={d}>{d}</li>
               ))}

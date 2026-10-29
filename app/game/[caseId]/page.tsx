@@ -14,7 +14,7 @@ export default function GamePage({ params }: PageProps<"/game/[caseId]">) {
     // The case comes from the database, so show a fallback while it loads.
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
+        <main className="desk flex min-h-screen items-center justify-center font-type text-paper-300">
           Opening the case file…
         </main>
       }

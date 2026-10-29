@@ -41,8 +41,9 @@ export async function insertCase(
   // The array index becomes `position`, so the display order is kept.
   for (const [i, s] of c.suspects.entries()) {
     await client.query(
-      "INSERT INTO suspects (case_id, id, position, name, occupation, description) VALUES ($1, $2, $3, $4, $5, $6)",
-      [c.id, s.id, i, s.name, s.occupation, s.description]
+      `INSERT INTO suspects (case_id, id, position, name, occupation, description, appearance, look)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [c.id, s.id, i, s.name, s.occupation, s.description, s.appearance ?? null, s.look ? JSON.stringify(s.look) : null]
     );
   }
   for (const [i, clue] of c.clues.entries()) {

@@ -1,26 +1,122 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------- Design tokens: 1940s detective office at night ----------
+   Tailwind v4 turns these into classes, e.g. bg-walnut-950, text-paper-100,
+   border-brass-500, font-display. */
+@theme {
+  --color-walnut-950: #140e0a; /* dark desk wood: page background */
+  --color-walnut-900: #1e1510;
+  --color-walnut-800: #2b1f17;
+  --color-walnut-700: #3d2c20;
+  --color-paper-50: #faf3e2;
+  --color-paper-100: #f3e7cc; /* case files, cards */
+  --color-paper-200: #e6d3a8;
+  --color-paper-300: #d4bb88;
+  --color-ink-900: #2a1f17; /* text on paper */
+  --color-ink-700: #4a3a2c;
+  --color-ink-500: #6f5b47;
+  --color-brass-300: #dcb877;
+  --color-brass-500: #b8893b; /* accents, buttons, plaques */
+  --color-brass-700: #7d5a22;
+  --color-lamp-300: #f2c46d; /* lamp glow */
+  --color-evidence-500: #b8383a;
+  --color-evidence-600: #9e2a2b; /* red string, stamps */
+  --color-evidence-800: #5e1718;
+  --color-tape-400: #e8c547; /* police tape */
+  --color-moss-600: #4d6b3c; /* "solved" / success stamps */
+
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-type: var(--font-special-elite), "Courier New", Courier, monospace;
+  --font-body: var(--font-lora), Georgia, "Times New Roman", serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ---------- Textures (pure CSS / inline SVG, no image files) ---------- */
+
+/* The desk: dark wood with a warm lamp glow from above. */
+@utility desk {
+  background-color: var(--color-walnut-950);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgb(242 196 109 / 0.22), transparent 70%),
+    radial-gradient(ellipse 120% 80% at 50% 120%, rgb(0 0 0 / 0.55), transparent 60%),
+    repeating-linear-gradient(
+      92deg,
+      rgb(255 255 255 / 0.012) 0 2px,
+      transparent 2px 9px,
+      rgb(0 0 0 / 0.05) 9px 11px,
+      transparent 11px 23px
+    );
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Aged paper with a faint grain (an SVG noise filter, encoded inline). */
+@utility paper {
+  background-color: var(--color-paper-100);
+  color: var(--color-ink-900);
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.35), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgb(139 101 58 / 0.18), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.4) inset,
+    0 0 40px rgb(139 101 58 / 0.18) inset,
+    0 10px 24px rgb(0 0 0 / 0.45);
+}
+
+/* Cork board with speckles. */
+@utility cork {
+  background-color: #9c7148;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgb(60 35 15 / 0.35) 1px, transparent 1.5px),
+    radial-gradient(circle at 70% 60%, rgb(255 230 190 / 0.18) 1px, transparent 1.5px),
+    radial-gradient(circle at 40% 80%, rgb(60 35 15 / 0.3) 1.2px, transparent 1.8px),
+    radial-gradient(ellipse at 50% 0%, rgb(242 196 109 / 0.18), transparent 70%);
+  background-size: 13px 13px, 17px 17px, 23px 23px, 100% 100%;
+  box-shadow: 0 0 0 10px var(--color-walnut-700), 0 0 0 12px rgb(0 0 0 / 0.4), 0 20px 40px rgb(0 0 0 / 0.5) ;
+}
+
+/* Yellow and black police tape stripes. */
+@utility police-tape {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-tape-400) 0 26px,
+    #1b1712 26px 40px
+  );
+}
+
+/* ---------- Motion (gentle, and off for people who ask for less motion) ---------- */
+@keyframes lamp-flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.93; }
+  50% { opacity: 0.98; }
+  52% { opacity: 0.9; }
+}
+@keyframes stamp-thump {
+  0% { transform: scale(2.2) rotate(var(--stamp-rotate, -8deg)); opacity: 0; }
+  60% { transform: scale(0.95) rotate(var(--stamp-rotate, -8deg)); opacity: 1; }
+  100% { transform: scale(1) rotate(var(--stamp-rotate, -8deg)); opacity: 1; }
+}
+@utility animate-lamp {
+  animation: lamp-flicker 7s ease-in-out infinite;
+}
+@utility animate-stamp {
+  animation: stamp-thump 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
 
+/* ---------- Base ---------- */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-walnut-950);
+  color: var(--color-paper-100);
+  font-family: var(--font-body);
+}
+
+/* A visible keyboard focus ring everywhere, in lamp gold. */
+:focus-visible {
+  outline: 2px solid var(--color-lamp-300);
+  outline-offset: 3px;
 }
