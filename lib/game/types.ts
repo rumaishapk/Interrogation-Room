@@ -90,6 +90,14 @@ export type CaseDefinition = PublicCase & {
   knowledge: SuspectKnowledge[];
 };
 
+// One line of an interrogation.
+export type ChatMessage = {
+  role: "detective" | "suspect";
+  content: string;
+  // Suspect replies only: "fallback" means the AI was unavailable and a basic reply was used.
+  source?: "ai" | "fallback";
+};
+
 // What the server sends back after an accusation. Only revealed once the case is closed.
 export type AccusationResult = {
   outcome: "solved" | "partial" | "wrong-suspect";

@@ -14,9 +14,11 @@ type Panel = "none" | "interrogate" | "accuse";
 type Props = {
   // Only the public part of the case. The server stripped the answers before sending it.
   gameCase: PublicCase;
+  // Questions and answers saved on the server from earlier visits.
+  initialConversations: Record<string, ChatMessage[]>;
 };
 
-export default function GameBoard({ gameCase }: Props) {
+export default function GameBoard({ gameCase, initialConversations }: Props) {
   const { suspects, clues } = gameCase;
   const [activeTab, setActiveTab] = useState<Tab>("suspects");
   const [selectedSuspectId, setSelectedSuspectId] = useState(
@@ -24,7 +26,7 @@ export default function GameBoard({ gameCase }: Props) {
   );
   const [panel, setPanel] = useState<Panel>("none");
   // One conversation per suspect, keyed by suspect id: { david: [...], alice: [...] }
-  const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>({});
+  const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>(initialConversations);
   const [result, setResult] = useState<AccusationResult | null>(null);
 
   const selectedSuspect = suspects.find(
@@ -39,7 +41,13 @@ export default function GameBoard({ gameCase }: Props) {
     }));
   }
 
-  function restart() {
+  async function restart() {
+    // Forget the saved conversations too, so suspects start fresh.
+    await fetch("/api/interrogate", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ caseId: gameCase.id }),
+    }).catch(() => {});
     setActiveTab("suspects");
     setSelectedSuspectId(suspects[0].id);
     setPanel("none");

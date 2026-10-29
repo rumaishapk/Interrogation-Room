@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Suspect } from "@/lib/game/types";
+import type { ChatMessage, Suspect } from "@/lib/game/types";
 
-export type ChatMessage = {
-  role: "detective" | "suspect";
-  content: string;
-};
+export type { ChatMessage };
 
 type Props = {
   caseId: string;
@@ -53,7 +50,7 @@ export default function InterrogationChat({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "The suspect didn't respond.");
 
-      onNewMessage({ role: "suspect", content: data.reply });
+      onNewMessage({ role: "suspect", content: data.reply, source: data.source });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -98,6 +95,11 @@ export default function InterrogationChat({
                 {msg.role === "detective" ? "You" : suspect.name}
               </p>
               {msg.content}
+              {msg.source === "fallback" && (
+                <p className="mt-2 border-t border-slate-700 pt-2 text-xs italic text-amber-300/80">
+                  AI unavailable: basic answer. Try again in a little while.
+                </p>
+              )}
             </div>
           </div>
         ))}

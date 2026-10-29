@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { getCase, toPublicCase } from "@/lib/game/case-store";
 import { requirePlayerPage } from "@/lib/auth/player-session";
+import { getConversations } from "@/lib/game/interrogation-store";
 import GameBoard from "@/components/GameBoard";
 
 // A Server Component: it runs on the server, so it may read the full case.
@@ -29,10 +30,13 @@ async function CaseLoader({ params }: { params: Promise<{ caseId: string }> }) {
   // Load at request time, never during `next build`.
   await connection();
   // Players must log in to investigate; afterwards they come back to this case.
-  await requirePlayerPage(`/game/${caseId}`);
+  const player = await requirePlayerPage(`/game/${caseId}`);
 
   const caseDef = await getCase(caseId);
   if (!caseDef) notFound();
 
-  return <GameBoard gameCase={toPublicCase(caseDef)} />;
+  // Earlier questions and answers, so the chats survive a page refresh.
+  const conversations = await getConversations(player.id, caseId);
+
+  return <GameBoard gameCase={toPublicCase(caseDef)} initialConversations={conversations} />;
 }
