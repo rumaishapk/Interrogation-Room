@@ -11,6 +11,17 @@ export function isTemporaryGeminiError(err: unknown): err is ApiError {
   return err instanceof ApiError && (err.status === 500 || err.status === 503);
 }
 
+// A message a person can understand, for any error thrown by a Gemini call.
+export function geminiErrorMessage(err: unknown): string {
+  if (err instanceof ApiError && err.status === 429) {
+    return "Gemini rate limit reached. Wait a minute and try again.";
+  }
+  if (isTemporaryGeminiError(err)) {
+    return "Gemini is busy right now (high demand). Please try again in a few minutes.";
+  }
+  return "The AI service failed. Please try again later.";
+}
+
 let client: GoogleGenAI | undefined;
 
 // Created on first use, so a missing key only breaks AI features, not the whole app.

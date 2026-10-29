@@ -7,6 +7,7 @@ import type { Difficulty } from "@/lib/game/types";
 export default function GenerateCaseForm() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [idea, setIdea] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +32,7 @@ export default function GenerateCaseForm() {
       const response = await fetch("/api/admin/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ difficulty }),
+        body: JSON.stringify({ difficulty, idea }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -73,6 +74,20 @@ export default function GenerateCaseForm() {
           {isGenerating ? `Generating… ${seconds}s` : "Generate Case"}
         </button>
       </div>
+
+      <label className="mt-4 block text-sm">
+        <span className="text-slate-400">Story idea (optional)</span>
+        <textarea
+          value={idea}
+          onChange={(event) => setIdea(event.target.value)}
+          disabled={isGenerating}
+          maxLength={500}
+          rows={3}
+          placeholder="e.g. A famous chef is poisoned during a wedding feast in Kerala"
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-sm outline-none focus:border-red-500"
+        />
+        <span className="text-xs text-slate-500">{idea.length}/500</span>
+      </label>
 
       {isGenerating && (
         <p className="mt-3 text-sm text-slate-500">This usually takes 30–90 seconds. Please wait.</p>

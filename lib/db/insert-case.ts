@@ -5,16 +5,37 @@
 import type { ClientBase } from "pg";
 import type { CaseDefinition, CaseStatus } from "../game/types";
 
-export async function insertCase(client: ClientBase, c: CaseDefinition, status: CaseStatus) {
+// Set when a player created the case; left out for seeded and admin-generated cases.
+export type CaseCreator = { userId: string; prompt: string };
+
+export async function insertCase(
+  client: ClientBase,
+  c: CaseDefinition,
+  status: CaseStatus,
+  creator?: CaseCreator
+) {
   // Remove any older copy first. ON DELETE CASCADE clears its suspects, clues, truth, etc.
   await client.query("DELETE FROM cases WHERE id = $1", [c.id]);
 
   // $1, $2 ... are placeholders. pg sends the values separately from the SQL,
   // so text like "Richard's" can never break (or inject into) the query.
   await client.query(
-    `INSERT INTO cases (id, title, difficulty, briefing, victim, location, time_of_death, status, published_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $8 = 'published' THEN now() END)`,
-    [c.id, c.title, c.difficulty, c.briefing, c.victim, c.location, c.timeOfDeath, status]
+    `INSERT INTO cases
+       (id, title, difficulty, briefing, victim, location, time_of_death, status, published_at,
+        created_by, player_prompt)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $8 = 'published' THEN now() END, $9, $10)`,
+    [
+      c.id,
+      c.title,
+      c.difficulty,
+      c.briefing,
+      c.victim,
+      c.location,
+      c.timeOfDeath,
+      status,
+      creator?.userId ?? null,
+      creator?.prompt ?? null,
+    ]
   );
 
   // The array index becomes `position`, so the display order is kept.

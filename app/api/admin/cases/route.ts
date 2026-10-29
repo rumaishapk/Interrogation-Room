@@ -3,14 +3,24 @@ import { ApiError } from "@google/genai";
 import { pool } from "@/lib/db/pool";
 import { insertCase } from "@/lib/db/insert-case";
 import { generateCase } from "@/lib/game/generate-case";
+import { checkIdea } from "@/lib/game/moderate-idea";
+import { MAX_IDEA_LENGTH, normalizeIdea } from "@/lib/game/player-idea";
 import { isTemporaryGeminiError } from "@/lib/ai/gemini";
 import { isAdmin } from "@/lib/auth/admin-session";
 
-// POST /api/admin/cases  { "difficulty": "easy" | "medium" | "hard" }
+// POST /api/admin/cases  { "difficulty": "easy" | "medium" | "hard", "idea"?: string }
 // Generates a case with Gemini and saves it as a draft (players can't see drafts).
 // Admin only: every call costs API quota.
 
-const bodySchema = z.object({ difficulty: z.enum(["easy", "medium", "hard"]) });
+const bodySchema = z.object({
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  // Normalised first, then checked, so the length limit applies to the cleaned text.
+  idea: z
+    .string()
+    .transform(normalizeIdea)
+    .pipe(z.string().max(MAX_IDEA_LENGTH))
+    .optional(),
+});
 
 export async function POST(request: Request) {
   // Checked here as well as in proxy.ts, so this route is safe on its own.
@@ -26,12 +36,23 @@ export async function POST(request: Request) {
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json({ error: "difficulty must be easy, medium or hard." }, { status: 400 });
+    return Response.json(
+      { error: `difficulty must be easy, medium or hard; idea at most ${MAX_IDEA_LENGTH} characters.` },
+      { status: 400 }
+    );
   }
+  const idea = parsed.data.idea || undefined; // an empty idea means "no idea"
 
   let result;
   try {
-    result = await generateCase(parsed.data.difficulty);
+    // Check the idea first: a cheap call that can save an expensive one.
+    if (idea) {
+      const verdict = await checkIdea(idea);
+      if (!verdict.allowed) {
+        return Response.json({ error: verdict.reason, rejectedIdea: true }, { status: 422 });
+      }
+    }
+    result = await generateCase(parsed.data.difficulty, { idea });
   } catch (err) {
     console.error("Case generation failed:", err);
     if (err instanceof ApiError && err.status === 429) {

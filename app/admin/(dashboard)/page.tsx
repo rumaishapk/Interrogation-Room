@@ -44,7 +44,8 @@ async function AllCases() {
             <DifficultyBadge difficulty={c.difficulty} />
             <CaseStatusBadge status={c.status} />
             <span className="ml-auto text-xs text-slate-500">
-              {c.suspectCount} suspects · {c.createdAt.toLocaleString()}
+              {c.suspectCount} suspects · {c.createdBy ? `by ${c.createdBy}` : "admin"} ·{" "}
+              {c.createdAt.toLocaleString()}
             </span>
           </Link>
         </li>

@@ -80,6 +80,8 @@ export type CaseSummary = {
   difficulty: Difficulty;
   briefing: string;
   suspectCount: number;
+  // Username of the player who created it; null for built-in and admin cases.
+  createdBy: string | null;
 };
 
 // The full case, including answers. Server-only.

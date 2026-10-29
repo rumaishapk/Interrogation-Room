@@ -18,10 +18,13 @@ type CaseRow = Omit<PublicCase, "suspects" | "clues" | "motives" | "weapons">;
 export async function listPublishedCases(): Promise<CaseSummary[]> {
   // COUNT(*) comes back from Postgres as a string (it can exceed JS number range),
   // so ::int converts it to a regular integer.
+  // LEFT JOIN keeps cases with no creator (created_by is NULL); u.username is then NULL.
   const { rows } = await pool.query<CaseSummary>(
     `SELECT c.id, c.title, c.difficulty, c.briefing,
-            (SELECT COUNT(*)::int FROM suspects s WHERE s.case_id = c.id) AS "suspectCount"
+            (SELECT COUNT(*)::int FROM suspects s WHERE s.case_id = c.id) AS "suspectCount",
+            u.username AS "createdBy"
      FROM cases c
+     LEFT JOIN users u ON u.id = c.created_by
      WHERE c.status = 'published'
      ORDER BY CASE c.difficulty WHEN 'easy' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, c.title`
   );
@@ -37,8 +40,10 @@ export type AdminCaseSummary = CaseSummary & {
 export async function listAllCases(): Promise<AdminCaseSummary[]> {
   const { rows } = await pool.query<AdminCaseSummary>(
     `SELECT c.id, c.title, c.difficulty, c.briefing, c.status, c.created_at AS "createdAt",
-            (SELECT COUNT(*)::int FROM suspects s WHERE s.case_id = c.id) AS "suspectCount"
+            (SELECT COUNT(*)::int FROM suspects s WHERE s.case_id = c.id) AS "suspectCount",
+            u.username AS "createdBy"
      FROM cases c
+     LEFT JOIN users u ON u.id = c.created_by
      ORDER BY c.created_at DESC`
   );
   return rows;

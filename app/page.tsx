@@ -1,8 +1,13 @@
 import Link from "next/link";
+import PlayerNav from "@/components/account/PlayerNav";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 text-white">
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 text-white">
+      <div className="absolute inset-x-6 top-6">
+        <PlayerNav />
+      </div>
+
       <p className="mb-4 text-sm uppercase tracking-[0.35em] text-red-400">
         A murder mystery game
       </p>
