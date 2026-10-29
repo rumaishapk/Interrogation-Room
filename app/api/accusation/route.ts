@@ -1,9 +1,15 @@
 import { getCase } from "@/lib/game/case-store";
 import { evaluateAccusation } from "@/lib/game/accusation";
+import { getCurrentPlayer } from "@/lib/auth/player-session";
 
 const MAX_EVIDENCE = 10;
 
 export async function POST(request: Request) {
+  // The page already requires login, but an API can be called directly.
+  if (!(await getCurrentPlayer())) {
+    return Response.json({ error: "Please log in to play." }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();

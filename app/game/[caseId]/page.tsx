@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { getCase, toPublicCase } from "@/lib/game/case-store";
+import { requirePlayerPage } from "@/lib/auth/player-session";
 import GameBoard from "@/components/GameBoard";
 
 // A Server Component: it runs on the server, so it may read the full case.
@@ -27,6 +28,8 @@ async function CaseLoader({ params }: { params: Promise<{ caseId: string }> }) {
   const { caseId } = await params;
   // Load at request time, never during `next build`.
   await connection();
+  // Players must log in to investigate; afterwards they come back to this case.
+  await requirePlayerPage(`/game/${caseId}`);
 
   const caseDef = await getCase(caseId);
   if (!caseDef) notFound();

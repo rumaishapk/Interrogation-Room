@@ -6,6 +6,7 @@ import { signupSchema } from "@/lib/auth/credentials";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { createUser, findUserByUsername } from "@/lib/auth/users";
 import { endPlayerSession, startPlayerSession } from "@/lib/auth/player-session";
+import { safeNextPath } from "@/lib/auth/next-path";
 
 export type AccountFormState = { error?: string; username?: string };
 
@@ -33,7 +34,8 @@ export async function signup(_previous: AccountFormState, formData: FormData): P
     return { error: SOMETHING_WRONG, username };
   }
   // redirect() works by throwing a special signal, so it must stay outside try/catch.
-  redirect("/cases");
+  // The hidden "next" field can be edited by anyone, so check it again here.
+  redirect(safeNextPath(formData.get("next")));
 }
 
 export async function login(_previous: AccountFormState, formData: FormData): Promise<AccountFormState> {
@@ -55,7 +57,8 @@ export async function login(_previous: AccountFormState, formData: FormData): Pr
     console.error("Login failed:", err);
     return { error: SOMETHING_WRONG, username };
   }
-  redirect("/cases");
+  // The hidden "next" field can be edited by anyone, so check it again here.
+  redirect(safeNextPath(formData.get("next")));
 }
 
 export async function logout() {

@@ -7,15 +7,20 @@ import type { AccountFormState } from "@/app/account/actions";
 type Props = {
   mode: "login" | "signup";
   action: (state: AccountFormState, formData: FormData) => Promise<AccountFormState>;
+  // Where to go after success, e.g. back to the case the player clicked.
+  next: string;
 };
 
 // One form for both login and signup; only the wording and the action differ.
-export default function AccountForm({ mode, action }: Props) {
+export default function AccountForm({ mode, action, next }: Props) {
   const [state, formAction, isPending] = useActionState(action, {});
   const isSignup = mode === "signup";
+  // Keep ?next= when switching between login and signup.
+  const query = next === "/cases" ? "" : `?next=${encodeURIComponent(next)}`;
 
   return (
     <form action={formAction} className="mt-8 w-full max-w-sm space-y-4 text-left">
+      <input type="hidden" name="next" value={next} />
       <label className="block text-sm">
         <span className="text-slate-400">Username</span>
         <input
@@ -52,7 +57,7 @@ export default function AccountForm({ mode, action }: Props) {
 
       <p className="text-center text-sm text-slate-400">
         {isSignup ? "Already have an account? " : "New here? "}
-        <Link href={isSignup ? "/login" : "/signup"} className="text-red-400">
+        <Link href={`${isSignup ? "/login" : "/signup"}${query}`} className="text-red-400">
           {isSignup ? "Log in" : "Create an account"}
         </Link>
       </p>

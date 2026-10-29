@@ -11,12 +11,22 @@ export default function AdminLoginForm() {
   return (
     <form action={formAction} className="mt-8 w-full max-w-sm space-y-4">
       <label className="block text-left text-sm">
-        <span className="text-slate-400">Admin password</span>
+        <span className="text-slate-400">Admin username</span>
+        <input
+          name="username"
+          required
+          autoFocus
+          autoComplete="username"
+          defaultValue={state.username}
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-red-500"
+        />
+      </label>
+      <label className="block text-left text-sm">
+        <span className="text-slate-400">Password</span>
         <input
           type="password"
           name="password"
           required
-          autoFocus
           autoComplete="current-password"
           className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-red-500"
         />

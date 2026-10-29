@@ -1,23 +1,17 @@
 import "server-only";
 import { cache } from "react";
-import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { pool } from "@/lib/db/pool";
+import { hashSessionToken as hashToken, newSessionToken } from "./session-token";
 
 const COOKIE_NAME = "player_session";
 const SESSION_DAYS = 30;
 
 export type Player = { id: string; username: string };
 
-// The cookie holds a random token. The database stores only its SHA-256 hash,
-// so a leaked sessions table can't be used to log in.
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
-
 export async function startPlayerSession(userId: string) {
-  // 32 random bytes: impossible to guess.
-  const token = randomBytes(32).toString("base64url");
+  const token = newSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
 
   // Tidy up this player's old, expired sessions while we're here.
@@ -63,3 +57,11 @@ export const getCurrentPlayer = cache(async (): Promise<Player | null> => {
   );
   return rows[0] ?? null;
 });
+
+// For pages that need a logged-in player: guests go to /login, and come back
+// to `returnTo` afterwards.
+export async function requirePlayerPage(returnTo: string): Promise<Player> {
+  const player = await getCurrentPlayer();
+  if (!player) redirect(`/login?next=${encodeURIComponent(returnTo)}`);
+  return player;
+}
