@@ -2,7 +2,8 @@ import "server-only";
 import { pool } from "@/lib/db/pool";
 import { hashPassword } from "./password";
 
-export type UserRow = { id: string; username: string; passwordHash: string };
+// passwordHash is null for players who only log in with Google.
+export type UserRow = { id: string; username: string; passwordHash: string | null };
 
 // Postgres error code for "a UNIQUE constraint was violated".
 const UNIQUE_VIOLATION = "23505";

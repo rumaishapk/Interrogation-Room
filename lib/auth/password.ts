@@ -47,3 +47,17 @@ export async function verifyPassword(password: string, stored: string): Promise<
   // Constant-time comparison, so timing can't reveal how much of the hash matched.
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
+
+// For the login form. `storedHash` is null/undefined when the account has no password
+// (the username doesn't exist, or the player only uses Google). We still run a full
+// check against `fallbackHash` so those cases take as long as a wrong password,
+// but the answer is always "no" when there is no stored password: otherwise anyone
+// who knew the fallback's password could log in as a Google-only player.
+export async function verifyLoginPassword(
+  password: string,
+  storedHash: string | null | undefined,
+  fallbackHash: string
+): Promise<boolean> {
+  const matches = await verifyPassword(password, storedHash ?? fallbackHash);
+  return storedHash != null && matches;
+}

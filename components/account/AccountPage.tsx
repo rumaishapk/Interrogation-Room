@@ -2,34 +2,47 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/auth/player-session";
+import { getGoogleConfig, hasPendingGoogleSignup } from "@/lib/auth/google";
 import { safeNextPath } from "@/lib/auth/next-path";
 import { login, signup } from "@/app/account/actions";
 import PaperCard from "@/components/ui/PaperCard";
 import Silhouette from "@/components/ui/Silhouette";
 import Stamp from "@/components/ui/Stamp";
 import AccountForm from "./AccountForm";
+import GoogleButton from "./GoogleButton";
+import GoogleNameForm from "./GoogleNameForm";
 
 type Props = {
-  mode: "login" | "signup";
+  // "google-name" is the follow-up page for first-time Google players.
+  mode: "login" | "signup" | "google-name";
   // From the URL, e.g. /login?next=/game/blackwood-001
-  searchParams: Promise<{ next?: string | string[] }>;
+  searchParams: Promise<{ next?: string | string[]; error?: string | string[] }>;
+};
+
+// Shown when we come back from Google without a login. Keys are the ?error= values.
+const GOOGLE_ERRORS: Record<string, string> = {
+  google_failed: "Google sign-in didn't work. Please try again.",
+  google_cancelled: "Google sign-in was cancelled.",
+  google_expired: "That Google sign-in timed out. Please start again.",
+  google_unavailable: "Google sign-in isn't set up on this site yet.",
 };
 
 // The shared page for /login and /signup: a detective's ID card on the desk.
 export default function AccountPage({ mode, searchParams }: Props) {
   const isSignup = mode === "signup";
+  const isGoogleName = mode === "google-name";
   return (
     <main className="desk flex min-h-screen flex-col items-center justify-center px-4 py-10">
       <p className="font-type text-xs uppercase tracking-[0.45em] text-brass-300">Homicide Division</p>
       <h1 className="mt-3 text-center font-display text-3xl font-bold text-paper-100 sm:text-4xl">
-        {isSignup ? "Register as a Detective" : "Detective Sign-In"}
+        {isGoogleName ? "Choose Your Detective Name" : isSignup ? "Register as a Detective" : "Detective Sign-In"}
       </h1>
 
       <PaperCard tilt={-0.8} fastener="tape" className="mt-8 w-full max-w-2xl p-6 sm:p-8">
         <div className="flex items-center justify-between border-b-2 border-ink-900/70 pb-3">
           <span className="font-display text-lg font-black uppercase tracking-widest text-ink-900">Detective Bureau</span>
           <span className="font-type text-xs uppercase tracking-widest text-ink-500">
-            {isSignup ? "Application form" : "Identification card"}
+            {isSignup || isGoogleName ? "Application form" : "Identification card"}
           </span>
         </div>
 
@@ -40,8 +53,8 @@ export default function AccountPage({ mode, searchParams }: Props) {
               <Silhouette className="aspect-[5/6] w-full" />
             </div>
             <div className="mt-3 text-center">
-              <Stamp tone={isSignup ? "ink" : "red"} rotate={-8}>
-                {isSignup ? "Pending" : "Authorised"}
+              <Stamp tone={isSignup || isGoogleName ? "ink" : "red"} rotate={-8}>
+                {isSignup || isGoogleName ? "Pending" : "Authorised"}
               </Stamp>
             </div>
           </div>
@@ -60,9 +73,19 @@ export default function AccountPage({ mode, searchParams }: Props) {
 }
 
 async function FormOrRedirect({ mode, searchParams }: Props) {
-  const next = safeNextPath((await searchParams).next);
+  const query = await searchParams;
+  const next = safeNextPath(query.next);
   // Already logged in? Skip the form.
   if (await getCurrentPlayer()) redirect(next);
+
+  if (mode === "google-name") {
+    // Only reachable straight after Google confirmed who the player is.
+    if (!(await hasPendingGoogleSignup())) redirect("/login?error=google_expired");
+    return <GoogleNameForm />;
+  }
+
+  const errorKey = Array.isArray(query.error) ? query.error[0] : query.error;
+  const errorMessage = errorKey ? GOOGLE_ERRORS[errorKey] : undefined;
   return (
     <div>
       {next.startsWith("/game/") && (
@@ -70,6 +93,13 @@ async function FormOrRedirect({ mode, searchParams }: Props) {
           Log in or sign up to start this investigation.
         </p>
       )}
+      {errorMessage && (
+        <p role="alert" className="mb-4 border-l-4 border-evidence-600 bg-evidence-600/10 px-3 py-2 font-type text-sm text-evidence-800">
+          {errorMessage}
+        </p>
+      )}
+      {/* Hidden until GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are set. */}
+      {getGoogleConfig() && <GoogleButton next={next} />}
       <AccountForm mode={mode} action={mode === "signup" ? signup : login} next={next} />
     </div>
   );

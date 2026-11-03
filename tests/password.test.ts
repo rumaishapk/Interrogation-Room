@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { hashPassword, verifyPassword, MAX_PASSWORD_LENGTH } from "../lib/auth/password.ts";
+import { hashPassword, verifyPassword, verifyLoginPassword, MAX_PASSWORD_LENGTH } from "../lib/auth/password.ts";
 
 test("the right password verifies, a wrong one doesn't", async () => {
   const stored = await hashPassword("detective123");
@@ -41,4 +41,21 @@ test("passwords are case-sensitive", async () => {
 test("an over-long password is rejected without hashing it", async () => {
   const stored = await hashPassword("detective123");
   assert.equal(await verifyPassword("x".repeat(MAX_PASSWORD_LENGTH + 1), stored), false);
+});
+
+test("login: an account with no password (Google-only) can never be logged into with a password", async () => {
+  // The fallback hash is of a password an attacker could know. It must not help.
+  const fallback = await hashPassword("known-to-attacker");
+  assert.equal(await verifyLoginPassword("known-to-attacker", null, fallback), false);
+  assert.equal(await verifyLoginPassword("known-to-attacker", undefined, fallback), false);
+  assert.equal(await verifyLoginPassword("", null, fallback), false);
+});
+
+test("login: accounts with a password still log in normally", async () => {
+  const fallback = await hashPassword("whatever");
+  const stored = await hashPassword("detective123");
+  assert.equal(await verifyLoginPassword("detective123", stored, fallback), true);
+  assert.equal(await verifyLoginPassword("wrong-password", stored, fallback), false);
+  // The fallback's password doesn't work on a real account either.
+  assert.equal(await verifyLoginPassword("whatever", stored, fallback), false);
 });
