@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Lora, Playfair_Display, Special_Elite } from "next/font/google";
 import "./globals.css";
+import SoundProvider from "@/components/sound/SoundProvider";
 
 // next/font downloads these at build time and serves them from our own site,
 // so there are no requests to Google when a page loads.
@@ -19,7 +21,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${playfair.variable} ${specialElite.variable} ${lora.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        {/* usePathname needs a Suspense boundary here; the sound control isn't needed for first paint. */}
+        <Suspense fallback={null}>
+          <SoundProvider />
+        </Suspense>
+      </body>
     </html>
   );
 }
