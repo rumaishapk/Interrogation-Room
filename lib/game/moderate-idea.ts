@@ -1,5 +1,5 @@
 import "server-only";
-import { getGemini, GEMINI_MODEL, isTemporaryGeminiError } from "@/lib/ai/gemini";
+import { generateContent, GEMINI_MODEL, isTemporaryGeminiError } from "@/lib/ai/gemini";
 import { toGeminiSchema } from "@/lib/ai/gemini-schema";
 import { withRetry } from "@/lib/ai/retry";
 import {
@@ -14,7 +14,7 @@ import {
 export async function checkIdea(idea: string): Promise<IdeaVerdict> {
   const response = await withRetry(
     () =>
-      getGemini().models.generateContent({
+      generateContent({
         model: GEMINI_MODEL,
         contents: storyIdeaBlock(idea),
         config: {

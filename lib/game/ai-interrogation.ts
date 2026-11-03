@@ -1,6 +1,6 @@
 import "server-only";
 import { ThinkingLevel, type Content } from "@google/genai";
-import { getGemini, GEMINI_MODEL, isTemporaryGeminiError } from "@/lib/ai/gemini";
+import { generateContent, GEMINI_MODEL, isTemporaryGeminiError } from "@/lib/ai/gemini";
 import { withRetry } from "@/lib/ai/retry";
 import { toPublicCase } from "./case-store";
 import { getSuspectReply } from "./interrogation";
@@ -40,7 +40,7 @@ export async function askSuspect(
   const callGemini = () =>
     withRetry(
       () =>
-        getGemini().models.generateContent({
+        generateContent({
           model: GEMINI_MODEL,
           contents,
           config: {

@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Content } from "@google/genai";
-import { getGemini, GEMINI_MODEL, isTemporaryGeminiError } from "@/lib/ai/gemini";
+import { generateContent, GEMINI_MODEL, isTemporaryGeminiError } from "@/lib/ai/gemini";
 import { toGeminiSchema } from "@/lib/ai/gemini-schema";
 import { withRetry } from "@/lib/ai/retry";
 import { caseSchema, validateCase } from "./validate-case";
@@ -77,7 +77,6 @@ export async function generateCase(
   difficulty: Difficulty,
   options: { idea?: string } = {}
 ): Promise<GenerateResult> {
-  const ai = getGemini();
   // The conversation so far. A repair attempt adds the model's answer and our error list.
   const contents: Content[] = [
     { role: "user", parts: [{ text: buildRequest(difficulty, options.idea) }] },
@@ -88,7 +87,7 @@ export async function generateCase(
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const response = await withRetry(
       () =>
-        ai.models.generateContent({
+        generateContent({
           model: GEMINI_MODEL,
           contents,
           config: {

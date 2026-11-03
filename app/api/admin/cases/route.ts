@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { ApiError } from "@google/genai";
 import { pool } from "@/lib/db/pool";
 import { insertCase } from "@/lib/db/insert-case";
 import { generateCase } from "@/lib/game/generate-case";
 import { checkIdea } from "@/lib/game/moderate-idea";
 import { MAX_IDEA_LENGTH, normalizeIdea } from "@/lib/game/player-idea";
-import { isTemporaryGeminiError } from "@/lib/ai/gemini";
+import { geminiErrorMessage, isQuotaError, isTemporaryGeminiError } from "@/lib/ai/gemini";
 import { isAdmin } from "@/lib/auth/admin-session";
 
 // POST /api/admin/cases  { "difficulty": "easy" | "medium" | "hard", "idea"?: string }
@@ -55,8 +54,9 @@ export async function POST(request: Request) {
     result = await generateCase(parsed.data.difficulty, { idea });
   } catch (err) {
     console.error("Case generation failed:", err);
-    if (err instanceof ApiError && err.status === 429) {
-      return Response.json({ error: "Gemini rate limit reached. Wait a minute and try again." }, { status: 429 });
+    // Every configured key has run out of quota.
+    if (isQuotaError(err)) {
+      return Response.json({ error: geminiErrorMessage(err) }, { status: 429 });
     }
     // Still busy after the automatic retries.
     if (isTemporaryGeminiError(err)) {
